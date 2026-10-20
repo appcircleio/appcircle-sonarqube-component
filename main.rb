@@ -10,9 +10,9 @@ def env_has_key(key)
   !ENV[key].nil? && ENV[key] != "" ? ENV[key] : abort("Missing #{key}.")
 end
 
-def run_command(*command)
-  puts "@@[command] #{command.join(" ")}"
-  unless system(*command)
+def run_command(command)
+  puts "@@[command] #{command}"
+  unless system(command)
     exit $?.exitstatus
   end
 end
@@ -63,14 +63,14 @@ def download_cli(base_url, version)
   zip_path = File.join(temp_path, file_name)
 
   puts "Downloading SonarScanner CLI #{version} from #{url}"
-  run_command("curl", "-fsSL", "--retry", "3", "-o", zip_path, url)
+  run_command("curl -fsSL --retry 3 -o #{Shellwords.escape(zip_path)} #{Shellwords.escape(url)}")
 
   expected = fetch("#{url}.sha256").split.first.to_s.downcase
   actual = Digest::SHA256.file(zip_path).hexdigest
   abort("SHA-256 mismatch for #{file_name}: expected '#{expected}', got '#{actual}'") unless expected == actual
   puts "SHA-256 verified: #{actual}"
 
-  run_command("unzip", "-qq", "-o", zip_path, "-d", temp_path)
+  run_command("unzip -qq -o #{Shellwords.escape(zip_path)} -d #{Shellwords.escape(temp_path)}")
   File.delete(zip_path)
   File.join(temp_path, "sonar-scanner-#{version}", "bin", "sonar-scanner")
 end
